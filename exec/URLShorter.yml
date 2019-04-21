@@ -6,7 +6,10 @@
   used: 2
 - shorturl: cs
   redirecturl: http://coderschool.vn
-  used: 0
+  used: 3
 - shorturl: zing
   redirecturl: https://zing.vn
   used: 3
+- shorturl: wcttbwwy
+  redirecturl: https://www.youtube.com
+  used: 2

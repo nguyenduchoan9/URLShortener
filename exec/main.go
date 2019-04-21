@@ -4,43 +4,20 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"os/signal"
+	"regexp"
 	"sort"
 	"strconv"
 	"syscall"
 	"time"
 
+	"github.com/nguyendhoan9/coderschool.go/assignment.1/models"
 	"github.com/nguyendhoan9/coderschool.go/assignment.1/urlmanager"
 	"github.com/nguyendhoan9/coderschool.go/assignment.1/urlmanagerutil"
 )
-
-type command struct {
-	addURL, redirectionURLOfAddURL, removeURL, port string
-	listRedirections, help                          bool
-	args                                            []string
-}
-
-func (cmd *command) isHelpCommand() bool {
-	return cmd.help
-}
-
-func (cmd *command) isListRedirectionCommand() bool {
-	return cmd.listRedirections
-}
-
-func (cmd *command) isAddURLCommand() bool {
-	return len(cmd.addURL) > 0 && len(cmd.redirectionURLOfAddURL) > 0 && len(cmd.args) > 0 && cmd.args[0] == "configure"
-}
-
-func (cmd *command) isRemoveURLCommand() bool {
-	return len(cmd.removeURL) > 0
-}
-
-func (cmd *command) isStartServerInPort() bool {
-	return len(cmd.port) > 0 && len(cmd.args) > 0 && cmd.args[0] == "run"
-}
 
 var yamlurlmanager = urlmanager.Yamlurlmanager{}
 
@@ -53,7 +30,7 @@ func main() {
 	}
 }
 
-func parseCommand() (command, bool) {
+func parseCommand() (models.Command, bool) {
 	addURL := flag.String("a", "", "Append URL.")
 	redirectURLOfAddURL := flag.String("u", "", "Redirection URL of add URL.")
 	removedURL := flag.String("d", "", "Remove URL.")
@@ -71,14 +48,14 @@ func parseCommand() (command, bool) {
 			flag.CommandLine.Parse(args[1:])
 		}
 	}
-	return command{
-		addURL:                 *addURL,
-		redirectionURLOfAddURL: *redirectURLOfAddURL,
-		removeURL:              *removedURL,
-		listRedirections:       *listRedirections,
-		port:                   *port,
-		help:                   *help,
-		args:                   args,
+	return models.Command{
+		AddURL:                 *addURL,
+		RedirectionURLOfAddURL: *redirectURLOfAddURL,
+		RemoveURL:              *removedURL,
+		ListRedirections:       *listRedirections,
+		Port:                   *port,
+		Help:                   *help,
+		Args:                   args,
 	}, valid
 }
 
@@ -87,20 +64,40 @@ func printUsage() {
 	flag.PrintDefaults()
 }
 
-func proceedCommand(commad *command) {
-	if commad.isHelpCommand() {
+func proceedCommand(commad *models.Command) {
+	if commad.IsHelpCommand() {
 		printUsage()
-	} else if commad.isListRedirectionCommand() {
+	} else if commad.IsListRedirectionCommand() {
 		listRedirectionURL()
-	} else if commad.isRemoveURLCommand() {
-		urlmanagerutil.RemoveShortURL(yamlurlmanager, commad.removeURL)
-	} else if commad.isAddURLCommand() {
-		urlmanagerutil.AddShortURL(yamlurlmanager, commad.addURL, commad.redirectionURLOfAddURL)
-	} else if commad.isStartServerInPort() {
+	} else if commad.IsRemoveURLCommand() {
+		urlmanagerutil.RemoveShortURL(yamlurlmanager, commad.RemoveURL)
+	} else if commad.IsAddURLCommand() {
+		if len(commad.AddURL) == 0 {
+			urlmanagerutil.AddShortURL(yamlurlmanager, randStringRunes(8, []rune(removeNonChar(commad.RedirectionURLOfAddURL))), commad.RedirectionURLOfAddURL)
+		} else {
+			urlmanagerutil.AddShortURL(yamlurlmanager, commad.AddURL, commad.RedirectionURLOfAddURL)
+		}
+	} else if commad.IsStartServerInPort() {
 		startServer(commad)
 	} else {
 		printUsage()
 	}
+}
+
+func removeNonChar(words string) string {
+	reg, err := regexp.Compile("[^a-zA-Z0-9]+")
+	if err != nil {
+		log.Fatal(err)
+	}
+	return reg.ReplaceAllString(words, "")
+}
+
+func randStringRunes(n int, letterRunes []rune) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
 }
 
 func listRedirectionURL() {
@@ -124,8 +121,8 @@ func printRow(col1, col2, col3 string) {
 	fmt.Printf("|%-15s|%-40s|%-7s|\n", col1, col2, col3)
 }
 
-func startServer(cmd *command) {
-	log.Println("Starting serving at http://localhost:" + cmd.port)
+func startServer(cmd *models.Command) {
+	log.Println("Starting serving at http://localhost:" + cmd.Port)
 	http.HandleFunc("/", handlerRequest)
 
 	var gracefulStop = make(chan os.Signal)
@@ -140,7 +137,7 @@ func startServer(cmd *command) {
 		os.Exit(0)
 	}()
 
-	http.ListenAndServe(":"+cmd.port, nil)
+	http.ListenAndServe(":"+cmd.Port, nil)
 }
 
 func handlerRequest(w http.ResponseWriter, req *http.Request) {
