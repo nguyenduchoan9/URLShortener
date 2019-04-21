@@ -1,3 +1,12 @@
-- shorturl: kit
-  redirecturl: http://zing.vn
+- shorturl: kunka
+  redirecturl: https://github.com
+  used: 1
+- shorturl: go
+  redirecturl: https://golang.com
+  used: 2
+- shorturl: cs
+  redirecturl: http://coderschool.vn
   used: 0
+- shorturl: zing
+  redirecturl: https://zing.vn
+  used: 3

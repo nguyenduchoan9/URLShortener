@@ -13,6 +13,36 @@ const mURLPersistentName = "URLShorter.yml"
 
 type Yamlurlmanager struct{}
 
+func (manager Yamlurlmanager) GetURLShortenerBy(shortURL string) URLShortener {
+	shortenerurls := make([]URLShortener, 0)
+	if err := manager.GetURLShorteners(&shortenerurls); err == nil {
+		for _, v := range shortenerurls {
+			if v.ShortURL == shortURL {
+				return v
+			}
+		}
+	}
+	return URLShortener{}
+}
+
+func (manager Yamlurlmanager) IncreaseTimeOfUsage(shortURL string) {
+	shortenerurls := make([]URLShortener, 0)
+	if err := manager.GetURLShorteners(&shortenerurls); err == nil {
+		success := false
+		index := 0
+		for i, v := range shortenerurls {
+			if v.ShortURL == shortURL {
+				index = i
+				success = true
+			}
+		}
+		if success {
+			shortenerurls[index].Used++
+			saveURLShortener(&shortenerurls)
+		}
+	}
+}
+
 func (manager Yamlurlmanager) GetURLShorteners(URLShorteners *[]URLShortener) error {
 	if _, err := os.Stat(getYAMLFilePath()); err == nil {
 		yamlFileBytes, readError := ioutil.ReadFile((getYAMLFilePath()))

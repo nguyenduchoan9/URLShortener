@@ -4,6 +4,14 @@ import (
 	"github.com/nguyendhoan9/coderschool.go/assignment.1/urlmanager"
 )
 
+func GetURLShortenerBy(urlManager urlmanager.URLManager, shortURL string) urlmanager.URLShortener {
+	return urlManager.GetURLShortenerBy(shortURL)
+}
+
+func IncreaseTimeOfUsage(urlManager urlmanager.URLManager, shortURL string) {
+	urlManager.IncreaseTimeOfUsage(shortURL)
+}
+
 func GetURLShorteners(urlManager urlmanager.URLManager, URLShorteners *[]urlmanager.URLShortener) error {
 	return urlManager.GetURLShorteners(URLShorteners)
 }
